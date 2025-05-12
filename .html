@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Starlink</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+        }
+
+        .header {
+            background-color: #4267B2;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .header .search-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header input {
+            padding: 5px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .header .settings-icon {
+            cursor: pointer;
+            font-size: 24px;
+        }
+
+        .beta-text {
+            font-size: 12px;
+            color: #f0f2f5;
+            background-color: #365899;
+            padding: 2px 8px;
+            border-radius: 5px;
+            margin-left: 10px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .post-box {
+            padding: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .post-box textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: none;
+        }
+
+        .post-box button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #4267B2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .post-box button:hover {
+            background-color: #365899;
+        }
+
+        .posts {
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .post {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .post h3 {
+            margin: 0 0 10px;
+            font-size: 18px;
+        }
+
+        .post p {
+            margin: 0;
+        }
+
+        .post img {
+            width: 100%;
+            height: auto;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+
+        .search-result {
+            margin: 20px auto;
+            text-align: center;
+            display: none;
+        }
+
+        .search-result img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+
+        .search-result h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .settings-page {
+            display: none;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .settings-page input {
+            margin: 10px 0;
+            padding: 10px;
+            width: 80%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .settings-page button {
+            padding: 10px 20px;
+            background-color: #4267B2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .settings-page button:hover {
+            background-color: #365899;
+        }
+
+        .back-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #ddd;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .back-button:hover {
+            background-color: #bbb;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Starlink</h1>
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Ara (örn: Kullanıcı 1)" oninput="searchUser()">
+            <span class="beta-text">Beta Q Aşamasında</span>
+            <span class="settings-icon" onclick="openSettings()">⚙️</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="post-box">
+            <textarea id="postContent" rows="3" placeholder="Ne düşünüyorsunuz?"></textarea>
+            <button onclick="addPost()">Paylaş</button>
+        </div>
+        <div class="posts" id="posts">
+            <!-- Gönderiler burada görünecek -->
+        </div>
+        <div class="load-more">
+            <p id="noMoreText">Başka kalmadı, yenilemek için aşağıdaki tuşa basın.</p>
+            <button onclick="loadMore()">Yenile</button>
+        </div>
+    </div>
+
+    <div class="search-result" id="searchResult">
+        <img id="searchProfilePic" src="" alt="Profil Fotoğrafı">
+        <h3 id="searchProfileName"></h3>
+    </div>
+
+    <div class="container settings-page" id="settingsPage">
+        <h2>Ayarlar</h2>
+        <input type="text" id="username" placeholder="Adınızı girin">
+        <button onclick="updateProfile()">Güncelle</button>
+        <button class="back-button" onclick="closeSettings()">Geri Dön</button>
+    </div>
+
+    <script>
+        let currentUser = {
+            name: "Kullanıcı",
+            profilePic: "https://via.placeholder.com/50"
+        };
+
+        function addPost() {
+            const postContent = document.getElementById('postContent').value;
+            if (postContent.trim() === '') {
+                alert('Lütfen bir şeyler yazın!');
+                return;
+            }
+
+            const postsContainer = document.getElementById('posts');
+            const postElement = document.createElement('div');
+            postElement.className = 'post';
+            postElement.innerHTML = `
+                <h3><img src="${currentUser.profilePic}" alt="Profil" style="width:30px; height:30px; border-radius:50%; margin-right:10px;">${currentUser.name}</h3>
+                <p>${postContent}</p>
+            `;
+
+            postsContainer.prepend(postElement);
+            document.getElementById('postContent').value = '';
+        }
+
+        function loadMore() {
+            const postsContainer = document.getElementById('posts');
+            postsContainer.innerHTML = '';
+            for (let i = 0; i < 100; i++) {
+                const postElement = document.createElement('div');
+                postElement.className = 'post';
+                const randomImage = `https://picsum.photos/600/400?random=${Math.floor(Math.random() * 1000)}`;
+                postElement.innerHTML = `
+                    <h3>Rastgele Kullanıcı ${i + 1}</h3>
+                    <img src="${randomImage}" alt="Gönderi Resmi">
+                `;
+                postsContainer.appendChild(postElement);
+            }
+        }
+
+        function searchUser() {
+            const searchInput = document.getElementById('searchInput').value.trim().toLowerCase();
+            const searchResult = document.getElementById('searchResult');
+            const searchProfilePic = document.getElementById('searchProfilePic');
+            const searchProfileName = document.getElementById('searchProfileName');
+
+            if (searchInput.startsWith("kullanıcı")) {
+                const userNumber = parseInt(searchInput.split(" ")[1]);
+                if (!isNaN(userNumber) && userNumber > 0 && userNumber <= 100) {
+                    searchProfilePic.src = `https://picsum.photos/100?random=${userNumber}`;
+                    searchProfileName.innerText = `Kullanıcı ${userNumber}`;
+                    searchResult.style.display = "block";
+                } else {
+                    searchResult.style.display = "none";
+                }
+            } else {
+                searchResult.style.display = "none";
+            }
+        }
+
+        function openSettings() {
+            document.querySelector('.container').style.display = 'none';
+            document.getElementById('settingsPage').style.display = 'block';
+        }
+
+        function closeSettings() {
+            document.querySelector('.container').style.display = 'block';
+            document.getElementById('settingsPage').style.display = 'none';
+        }
+
+        // İlk yükleme
+        loadMore();
+    </script>
+</body>
+</html>
